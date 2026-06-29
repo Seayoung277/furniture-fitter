@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Furniture Fitter</title>
+  <link rel="icon" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;🛋️&lt;/text&gt;&lt;/svg&gt;" />
+  <!-- SLDS (progressive enhancement; app fully works without it) -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@salesforce-ux/design-system@2/assets/styles/salesforce-lightning-design-system.min.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="slds-scope">
+  <div id="app">
+    <!-- ======== Left control panel ======== -->
+    <aside id="panel">
+      <header id="brand">
+        <span class="logo">🛋️</span>
+        <div>
+          <h1>Furniture Fitter</h1>
+          <p>Drag furniture onto any floor plan</p>
+        </div>
+      </header>
+
+      <!-- FLOOR PLAN & SCALE (merged) -->
+      <article class="slds-card pcard" id="scaleCard">
+        <div class="card-head">
+          <h2>Floor Plan &amp; Scale</h2>
+          <button id="scaleEdit" class="slds-button slds-button_neutral mini" hidden>Edit</button>
+        </div>
+
+        <!-- Step 1: upload -->
+        <div class="card-body" id="imageBody">
+          <input id="fileInput" type="file" accept="image/*" hidden />
+          <button id="uploadBtn" class="slds-button slds-button_brand wfull">Upload Floor Plan…</button>
+          <p class="hint">Upload an image (or drag &amp; drop it onto the canvas).</p>
+        </div>
+
+        <!-- Step 2: calibrate (hidden until an image is loaded) -->
+        <div class="card-body" id="scaleBody" hidden>
+          <p class="hint">Step 2 — draw a line over a known distance, then enter its real length. One scale covers the whole image.</p>
+          <div class="slds-form-element">
+            <label class="slds-form-element__label" for="calUnit">Calibration unit</label>
+            <select id="calUnit" class="slds-select">
+              <option value="in">inches (in)</option>
+              <option value="ft">feet (ft)</option>
+              <option value="cm">centimeters (cm)</option>
+              <option value="m">meters (m)</option>
+              <option value="mm">millimeters (mm)</option>
+            </select>
+          </div>
+          <button id="calibrateBtn" class="slds-button slds-button_brand wfull">Draw Scale Line</button>
+          <button id="changeImgBtn" class="slds-button slds-button_neutral wfull">Replace Floor Plan…</button>
+          <div id="scaleStatus" class="scale-status">Not calibrated yet.</div>
+        </div>
+
+        <!-- Folded summary (after calibration) -->
+        <div class="card-body scale-summary" id="scaleSummary" hidden></div>
+      </article>
+
+      <!-- ADD FURNITURE -->
+      <article class="slds-card pcard">
+        <div class="card-head"><h2>Add Furniture</h2></div>
+        <div class="card-body">
+          <div class="slds-form-element">
+            <label class="slds-form-element__label" for="fName">Name</label>
+            <input id="fName" type="text" class="slds-input" placeholder="Sofa" />
+          </div>
+          <div class="slds-form-element">
+            <label class="slds-form-element__label" for="fShape">Shape</label>
+            <select id="fShape" class="slds-select">
+              <option value="rect">Rectangle</option>
+              <option value="round">Round / oval</option>
+            </select>
+          </div>
+          <div class="dim-row">
+            <div class="slds-form-element">
+              <label class="slds-form-element__label" for="fWidth"><span class="dimW">Width</span></label>
+              <input id="fWidth" type="number" min="0.1" step="0.1" class="slds-input" placeholder="84" />
+            </div>
+            <div class="slds-form-element">
+              <label class="slds-form-element__label" for="fDepth"><span class="dimD">Depth</span></label>
+              <input id="fDepth" type="number" min="0.1" step="0.1" class="slds-input" placeholder="36" />
+            </div>
+            <div class="slds-form-element unit-cell">
+              <label class="slds-form-element__label" for="furnUnit">Unit</label>
+              <select id="furnUnit" class="slds-select">
+                <option value="in">in</option>
+                <option value="ft">ft</option>
+                <option value="cm">cm</option>
+                <option value="m">m</option>
+                <option value="mm">mm</option>
+              </select>
+            </div>
+          </div>
+          <div class="color-row">
+            <label class="slds-form-element__label" for="fColor">Color</label>
+            <input id="fColor" type="color" value="#1b96ff" />
+          </div>
+          <button id="addBtn" class="slds-button slds-button_brand wfull" disabled>Add to Plan</button>
+          <p class="hint" id="addHint">Set the scale first to add furniture.</p>
+        </div>
+      </article>
+
+      <!-- OPTIONS -->
+      <article class="slds-card pcard">
+        <div class="card-head"><h2>Options</h2></div>
+        <div class="card-body">
+          <label class="opt"><input id="optWallSnap" type="checkbox" /> <span>Snap to walls and other pieces</span></label>
+          <label class="opt"><input id="optFreeRotate" type="checkbox" /> <span>Free rotation</span></label>
+        </div>
+      </article>
+
+      <!-- LIST -->
+      <article class="slds-card pcard">
+        <div class="card-head"><h2>Pieces</h2></div>
+        <div class="card-body">
+          <ul id="furnList" class="furn-list"></ul>
+        </div>
+      </article>
+
+      <!-- HELP -->
+      <article class="slds-card pcard">
+        <div class="card-head"><h2>Instructions</h2></div>
+        <div class="card-body">
+          <ul class="help">
+            <li>Drag a piece of furniture to place it on the floor plan. Edges will automatically snap to walls and other pieces.</li>
+            <li>Drag with <kbd>Alt</kbd> to move without snapping.</li>
+            <li>Press <kbd>R</kbd> to rotate 90° clockwise, or <kbd>Shift</kbd>+<kbd>R</kbd> to rotate counterclockwise.</li>
+            <li>Move with <kbd>←</kbd><kbd>↑</kbd><kbd>↓</kbd><kbd>→</kbd>, or hold <kbd>Shift</kbd> with the arrow keys to move in bigger steps.</li>
+            <li>Press <kbd>Delete</kbd> to remove a piece.</li>
+            <li>Use wheel to zoom and drag to pan.</li>
+          </ul>
+          <button id="resetBtn" class="slds-button slds-button_destructive wfull">Reset Everything</button>
+        </div>
+      </article>
+    </aside>
+
+    <!-- ======== Stage ======== -->
+    <main id="stageWrap">
+      <div id="zoombar">
+        <button id="zoomOut" class="zbtn">−</button>
+        <span id="zoomLabel">100%</span>
+        <button id="zoomIn" class="zbtn">+</button>
+        <button id="zoomFit" class="zbtn fit">Fit</button>
+      </div>
+      <div id="scroller">
+        <div id="stage">
+          <img id="planImg" alt="floor plan" draggable="false" />
+          <div id="furnLayer"></div>
+          <svg id="overlay" xmlns="http://www.w3.org/2000/svg"></svg>
+        </div>
+      </div>
+      <div id="emptyState" class="empty-state">
+        <div class="empty-inner">
+          <div class="empty-icon">🗺️</div>
+          <h2>Upload a floor plan to begin</h2>
+          <p>Click <b>Upload floor plan</b> in the panel, or drag &amp; drop an image here.<br>Then set the scale before placing furniture.</p>
+          <button id="emptyUploadBtn" class="slds-button slds-button_brand">Upload Floor Plan…</button>
+        </div>
+      </div>
+      <div id="dropHint" class="drop-hint hidden">Drop image to load</div>
+      <div id="banner" class="banner hidden"></div>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

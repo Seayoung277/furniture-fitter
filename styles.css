@@ -43,8 +43,8 @@ body {
 .mini { font-size: 11px; padding: 2px 10px; min-height: auto; line-height: 20px; }
 
 .slds-form-element { margin-bottom: 10px; }
-.wfull { width: 100%; justify-content: center; margin-top: 4px; }
-.wfull + .wfull { margin-top: 8px; }
+.wfull { width: 100%; justify-content: center; margin-top: 4px; margin-left: 0; }
+.wfull + .wfull { margin-top: 8px; margin-left: 0; }
 
 /* hide number-input spinners on the furniture dimension fields */
 #fWidth::-webkit-outer-spin-button, #fWidth::-webkit-inner-spin-button,

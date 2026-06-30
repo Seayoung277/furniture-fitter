@@ -210,9 +210,8 @@
   function snapPiece(f, noSnap) {
     const b = aabb(f);
     if (noSnap) return;
-    const useWalls = opts.wallSnap;
-    if (!useWalls && furniture.length <= 1) return; // nothing to snap to
-    const s = snapAABB(b.x, b.y, b.w, b.h, f.id, useWalls);
+    if (!opts.wallSnap) return; // snapping (walls and pieces) fully disabled
+    const s = snapAABB(b.x, b.y, b.w, b.h, f.id, true);
     f.cx = s.x + b.hx; f.cy = s.y + b.hy;
   }
 
